@@ -1,10 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_cubit_todo/cubit/add_todo_cubit.dart';
+import 'package:toast/toast.dart';
 
 class AddTodoScreen extends StatelessWidget {
-  const AddTodoScreen({Key? key}) : super(key: key);
+  final _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return Container(child: Text('add todo'));
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Add Todo"),
+      ),
+      body: BlocListener<AddTodoCubit, AddTodoState>(
+        listener: (context, state) {
+          if (state is TodoAdded) {
+            Navigator.pop(context);
+          } else if (state is AddTodoError) {
+            Toast.show(
+              state.error,
+              context,
+              duration: 3,
+              backgroundColor: Colors.red,
+              gravity: Toast.CENTER,
+            );
+          }
+        },
+        child: _body(context),
+      ),
+    );
+  }
+
+  Widget _body(context) {
+    return Column(
+      children: [
+        TextField(
+          autofocus: true,
+          controller: _controller,
+          decoration: const InputDecoration(hintText: "Enter todo message..."),
+        ),
+        SizedBox(height: 10.0),
+        InkWell(
+          onTap: () {
+            final message = _controller.text;
+            BlocProvider.of<AddTodoCubit>(context).addTodo(message);
+          },
+          child: _addBtn(context),
+        )
+      ],
+    );
+  }
+
+  Widget _addBtn(context) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: 50.0,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Center(
+        child: BlocBuilder<AddTodoCubit, AddTodoState>(
+          builder: (context, state) {
+            if (state is AddingTodo) return CircularProgressIndicator();
+
+            return Text(
+              "Add Todo",
+              style: TextStyle(color: Colors.white),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
